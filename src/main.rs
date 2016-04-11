@@ -24,8 +24,7 @@ extern {
         -> libc::c_int;
 }
 
-fn file_add_suffix(orig: &str, suffix: &str) -> *const Path {
-    let path = Path::new(orig);
+fn file_add_suffix(path: &Path, suffix: &str) -> PathBuf {
     let dirname = path.parent();
     let filename = path.file_name().unwrap();
 
@@ -36,7 +35,8 @@ fn file_add_suffix(orig: &str, suffix: &str) -> *const Path {
     pb.push(filename);
     pb.push(suffix);
 
-    return pb.as_path();
+    //return Path::new(Box::new(pb.into_os_string().into_string().unwrap()));
+    return pb;
 }
 
 fn print_usage() {
@@ -61,16 +61,19 @@ fn main() {
     }
 
     if argc == 3 {
-        original_file = argv[1].clone();
-        buse_file = argv[2].clone();
+        original_file = PathBuf::from(&argv[1]);
+        buse_file = PathBuf::from(&argv[2]);
 
-        snapshot_file = "TODO".to_owned();
+        snapshot_file = file_add_suffix(&original_file, ".snap");
     }
     else if argc == 4 {
-        original_file = argv[1].clone();
-		snapshot_file = argv[2].clone();
-		buse_file = argv[3].clone();
+        original_file = PathBuf::from(&argv[1]);
+		snapshot_file = PathBuf::from(&argv[2]);
+		buse_file = PathBuf::from(&argv[3]);
+    }
+    else {
+        panic!();
     }
 
-    log_file = "TODO".to_owned();
+    log_file = file_add_suffix(&snapshot_file, ".snap");
 }

@@ -1,6 +1,9 @@
 extern crate libc;
 
+use std::io::Write;
 use std::ffi::CString;
+use std::path::Path;
+use std::path::PathBuf;
 
 #[repr(C)]
 struct BuseOps {
@@ -21,6 +24,53 @@ extern {
         -> libc::c_int;
 }
 
+fn file_add_suffix(orig: &str, suffix: &str) -> *const Path {
+    let path = Path::new(orig);
+    let dirname = path.parent();
+    let filename = path.file_name().unwrap();
+
+    let mut pb = PathBuf::new();
+    if dirname.is_some() {
+        pb.push(dirname.unwrap());
+    }
+    pb.push(filename);
+    pb.push(suffix);
+
+    return pb.as_path();
+}
+
+fn print_usage() {
+    writeln!(&mut std::io::stderr(),
+        "Usage: onionbuse <ro file> [<snapshot file>] <virtual file>").unwrap();
+}
+
 fn main() {
-    println!("Hello, world!");
+    let original_file;
+    let snapshot_file;
+    let log_file;
+
+    let buse_file;
+
+    let argv: Vec<_> = std::env::args().collect();
+    let argc = argv.len();
+
+    if argc != 3
+       && argc != 4 {
+           print_usage();
+           std::process::exit(-1);
+    }
+
+    if argc == 3 {
+        original_file = argv[1].clone();
+        buse_file = argv[2].clone();
+
+        snapshot_file = "TODO".to_owned();
+    }
+    else if argc == 4 {
+        original_file = argv[1].clone();
+		snapshot_file = argv[2].clone();
+		buse_file = argv[3].clone();
+    }
+
+    log_file = "TODO".to_owned();
 }

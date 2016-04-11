@@ -97,44 +97,26 @@ fn main() {
         panic!();
     }
 
-    log_file = file_add_suffix(&snapshot_file, ".snap");
+    log_file = file_add_suffix(&snapshot_file, ".log");
 
-    let _ofd = OpenOptions::new()
+    let ofd = OpenOptions::new()
         .read(true)
-        .open(original_file);
+        .open(original_file)
+        .unwrap_or_else(|err| panic!("ofd: {:?}", err));
 
-    let ofd;
-    match _ofd {
-        Result::Ok(val) => ofd = val,
-        Result::Err(err) =>
-          panic!("ofd: {:?}", err),
-    }
-
-    let _sfd = OpenOptions::new()
+    let sfd = OpenOptions::new()
         .read(true)
         .write(true)
         .create(true)
-        .open(snapshot_file);
+        .open(snapshot_file)
+        .unwrap_or_else(|err| panic!("sfd: {:?}", err));
 
-    let sfd;
-    match _sfd {
-        Result::Ok(val) => sfd = val,
-        Result::Err(err) =>
-          panic!("ofd: {:?}", err),
-    }
-
-    let _lfd = OpenOptions::new()
+    let lfd = OpenOptions::new()
         .read(true)
         .write(true)
         .create(true)
-        .open(log_file);
-
-    let lfd;
-    match _lfd {
-        Result::Ok(val) => lfd = val,
-        Result::Err(err) =>
-          panic!("ofd: {:?}", err),
-    }
+        .open(log_file)
+        .unwrap_or_else(|err| panic!("lfd: {:?}", err));
 
     let bops = BuseOps {
         .. Default::default()

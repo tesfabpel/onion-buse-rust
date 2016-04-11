@@ -1,0 +1,18 @@
+[root]
+name = "onion-buse-rust"
+version = "0.1.0"
+dependencies = [
+ "gcc 0.3.26 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "gcc"
+version = "0.3.26"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "libc"
+version = "0.2.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+

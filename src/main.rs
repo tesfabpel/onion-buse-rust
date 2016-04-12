@@ -11,11 +11,11 @@ use libc::*;
 
 #[repr(C)]
 struct BuseOps {
-    read: *mut extern fn(*mut c_void, u32, u64, *mut c_void) -> c_int,
-    write: *mut extern fn(*const c_void, u32, u64, *mut c_void) -> c_int,
-    disc: *mut extern fn(*mut c_void),
-    flush: *mut extern fn(*mut c_void) -> c_int,
-    trim: *mut extern fn(u64, u32, *mut c_void) -> c_int,
+    read: Option<extern fn(*mut c_void, u32, u64, *mut c_void) -> c_int>,
+    write: Option<extern fn(*const c_void, u32, u64, *mut c_void) -> c_int>,
+    disc: Option<extern fn(*mut c_void)>,
+    flush: Option<extern fn(*mut c_void) -> c_int>,
+    trim: Option<extern fn(u64, u32, *mut c_void) -> c_int>,
 
     size: u64,
 }
@@ -23,11 +23,11 @@ struct BuseOps {
 impl Default for BuseOps {
     fn default() -> BuseOps {
         BuseOps {
-            read: ptr::null_mut(),
-            write: ptr::null_mut(),
-            disc: ptr::null_mut(),
-            flush: ptr::null_mut(),
-            trim: ptr::null_mut(),
+            read: None,
+            write: None,
+            disc: None,
+            flush: None,
+            trim: None,
             size: 0
         }
     }
@@ -39,6 +39,14 @@ extern {
         aop: *const BuseOps,
         userdata: *mut c_void)
         -> c_int;
+}
+
+extern fn onion_read(buf: *mut c_void, len: u32, offset: u64, userdata: *mut c_void) -> c_int {
+    return 0;
+}
+
+extern fn onion_write(buf: *const c_void, len: u32, offset: u64, userdata: *mut c_void) -> c_int {
+    return 0;
 }
 
 struct BuseInstance {
@@ -108,8 +116,10 @@ fn main() {
 
     let ofd = OpenOptions::new()
         .read(true)
-        .open(original_file)
+        .open(&original_file)
         .unwrap_or_else(|err| panic!("ofd: {:?}", err));
+
+    let omd = std::fs::metadata(&original_file).unwrap();
 
     let sfd = OpenOptions::new()
         .read(true)
@@ -131,11 +141,16 @@ fn main() {
         lfd: lfd
     };
 
-    let bops = BuseOps {
-        .. Default::default()
-    };
-    let buse_file_c = buse_file.to_string_lossy().to_mut().as_ptr() as *const i8;
     unsafe {
+        println!("{:?}", omd.len());
+        let bops = BuseOps {
+            read: Some(onion_read),
+            write: Some(onion_write),
+            size: omd.len(),
+            .. Default::default()
+        };
+        let buse_file_c = buse_file.to_string_lossy().to_mut().as_ptr() as *const i8;
+
         let binst_raw = std::mem::transmute::<&mut BuseInstance, *mut c_void>(&mut binst);
         let res = buse_main(buse_file_c, &bops, binst_raw);
     }

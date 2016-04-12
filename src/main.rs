@@ -7,6 +7,7 @@ use std::fs::OpenOptions;
 use std::ffi::CString;
 use std::path::Path;
 use std::path::PathBuf;
+use libc::*;
 
 #[repr(C)]
 struct BuseOps {
@@ -38,6 +39,12 @@ extern {
         aop: *const BuseOps,
         userdata: *mut libc::c_void)
         -> libc::c_int;
+}
+
+struct BuseInstance {
+    ofd: File,
+    sfd: File,
+    lfd: File
 }
 
 fn file_add_suffix(path: &Path, suffix: &str) -> PathBuf {
@@ -118,11 +125,18 @@ fn main() {
         .open(log_file)
         .unwrap_or_else(|err| panic!("lfd: {:?}", err));
 
+    let mut binst = BuseInstance {
+        ofd: ofd,
+        sfd: sfd,
+        lfd: lfd
+    };
+
     let bops = BuseOps {
         .. Default::default()
     };
     let buse_file_c = buse_file.to_string_lossy().to_mut().as_ptr() as *const i8;
     unsafe {
-        let res = buse_main(buse_file_c, &bops, ptr::null_mut());
+        let binst_raw = std::mem::transmute::<&mut BuseInstance, *mut libc::c_void>(&mut binst);
+        let res = buse_main(buse_file_c, &bops, binst_raw);
     }
 }

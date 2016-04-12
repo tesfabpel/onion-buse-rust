@@ -11,11 +11,11 @@ use libc::*;
 
 #[repr(C)]
 struct BuseOps {
-    read: *mut extern fn(*mut libc::c_void, u32, u64, *mut libc::c_void) -> libc::c_int,
-    write: *mut extern fn(*const libc::c_void, u32, u64, *mut libc::c_void) -> libc::c_int,
-    disc: *mut extern fn(*mut libc::c_void),
-    flush: *mut extern fn(*mut libc::c_void) -> libc::c_int,
-    trim: *mut extern fn(u64, u32, *mut libc::c_void) -> libc::c_int,
+    read: *mut extern fn(*mut c_void, u32, u64, *mut c_void) -> c_int,
+    write: *mut extern fn(*const c_void, u32, u64, *mut c_void) -> c_int,
+    disc: *mut extern fn(*mut c_void),
+    flush: *mut extern fn(*mut c_void) -> c_int,
+    trim: *mut extern fn(u64, u32, *mut c_void) -> c_int,
 
     size: u64,
 }
@@ -35,10 +35,10 @@ impl Default for BuseOps {
 
 //#[link(name = "buse", kind = "static")]
 extern {
-    fn buse_main(dev_file: *const libc::c_char,
+    fn buse_main(dev_file: *const c_char,
         aop: *const BuseOps,
-        userdata: *mut libc::c_void)
-        -> libc::c_int;
+        userdata: *mut c_void)
+        -> c_int;
 }
 
 struct BuseInstance {
@@ -136,7 +136,7 @@ fn main() {
     };
     let buse_file_c = buse_file.to_string_lossy().to_mut().as_ptr() as *const i8;
     unsafe {
-        let binst_raw = std::mem::transmute::<&mut BuseInstance, *mut libc::c_void>(&mut binst);
+        let binst_raw = std::mem::transmute::<&mut BuseInstance, *mut c_void>(&mut binst);
         let res = buse_main(buse_file_c, &bops, binst_raw);
     }
 }

@@ -2,6 +2,7 @@ extern crate libc;
 
 use std::ptr;
 use std::io::prelude::*;
+use std::io::SeekFrom;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::ffi::CString;
@@ -41,12 +42,44 @@ extern {
         -> c_int;
 }
 
-extern fn onion_read(buf: *mut c_void, len: u32, offset: u64, userdata: *mut c_void) -> c_int {
+extern fn onion_read(buf: *mut c_void, mut len: u32, offset: u64, userdata: *mut c_void) -> c_int {
+    let binst = instance_from_userdata(userdata);
+    let ofd = &mut binst.ofd;
+
+    // WARNING: This is a simple transcription of the loopback example...
+
+    let seek_res = ofd.seek(SeekFrom::Start(offset));
+    // TODO: Check seek_res?
+    while len > 0 {
+        let mut xbuf = vec![0; len as usize];
+        let read_res = ofd.read(&mut xbuf);
+        let bytes_read = read_res.unwrap();
+        assert!(bytes_read > 0);
+
+        // TODO: Copy xbuf to buf (for bytes_read bytes)
+
+        len -= bytes_read as u32;
+
+        // Advance the buffer
+        //buf = (char *) buf + bytes_read; // TODO
+    }
+
     return 0;
 }
 
 extern fn onion_write(buf: *const c_void, len: u32, offset: u64, userdata: *mut c_void) -> c_int {
+    let binst = instance_from_userdata(userdata);
+
+
+
     return 0;
+}
+
+fn instance_from_userdata<'a>(userdata: *mut c_void) -> &'a mut BuseInstance {
+    unsafe {
+        let binst = std::mem::transmute::<*mut c_void, &mut BuseInstance>(userdata);
+        return binst;
+    }
 }
 
 struct BuseInstance {

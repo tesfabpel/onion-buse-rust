@@ -112,7 +112,7 @@ fn main() {
         panic!();
     }
 
-    log_file = file_add_suffix(&snapshot_file, ".log");
+    log_file = file_add_suffix(&original_file, ".log");
 
     let ofd = OpenOptions::new()
         .read(true)
